@@ -1,11 +1,12 @@
-Sys.setenv(OPENAI_API_KEY = "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")
+source("openAIAPIKey.R")
+Sys.setenv(OPENAI_API_KEY = openAiAPIKey)
 
 library(httr)
 library(jsonlite)
 
 # There's no wrapper for the OpenAI API suitable for using the deep research models, so we directly send the request.
 
-sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
+buildGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
 {
   # Build input payload
   payload <- list(
@@ -40,7 +41,7 @@ sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
   )
   
   json_payload <- toJSON(payload, auto_unbox = TRUE, pretty = TRUE)
-
+  
   # Make request
   res <- POST(
     url = "https://api.openai.com/v1/responses",
@@ -51,7 +52,14 @@ sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
     body = json_payload,
     encode = "json"
   )
-  
+  return(res)
+}
+
+
+sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
+{
+
+  res <- buildGptApiRequest(llmSystemPrompt, llmUserPrompt)
   stop_for_status(res)
   job <- content(res, as = "parsed")
   job_id <- job$id
