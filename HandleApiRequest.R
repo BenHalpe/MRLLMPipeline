@@ -3,6 +3,8 @@ Sys.setenv(OPENAI_API_KEY = "sk-proj-P6JTWTilu29IKe1YmV6-jovgdHxB9f9VaKoxDBx9ZuU
 library(httr)
 library(jsonlite)
 
+# There's no wrapper for the OpenAI API suitable for using the deep research models, so we directly send the request.
+
 sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
 {
   # Build input payload
@@ -61,16 +63,16 @@ sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
       paste0("https://api.openai.com/v1/responses/", job_id),
       add_headers(Authorization = paste("Bearer", Sys.getenv("OPENAI_API_KEY")))
     )
-    
+  
     stop_for_status(poll)
     data <- content(poll, as = "parsed")
     cat("Status:", data$status, "\n")
     
     if (data$status == "completed") {
-      message_output <- data$output[sapply(data$output, function(x) x$type == "message")]$content[[1]]$text
+      message_output <- data$output[sapply(data$output, function(x) x$type == "message")][[1]]$content[[1]]$text
       
       if (length(message_output) > 0) {
-        cat(message_output[[1]]$text)
+        cat(message_output)
       } else {
         cat("No message output found.\n")
       }
@@ -78,12 +80,10 @@ sendGptApiRequest <- function(llmSystemPrompt, llmUserPrompt)
     } else if (data$status == "failed") {
       cat("Job failed.\n")
       if (!is.null(data$error)) {
-        cat("🔍 Error message: ", data$error$message, "\n")
-        cat("🔢 Error type: ", data$error$type, "\n")
-      } else {
-        cat("⚠️ No detailed error info provided.\n")
+        cat("Error message: ", data$error$message, "\n")
+     
       }
-      stop("Deep Research failed.")
+      stop()
     }
   }
 }
